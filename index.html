@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.11.7/video-js.min.css" rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.11.7/video.min.js"></script>
+
+    <!-- Include jQuery before videojs-markers -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-eme@3.8.0/dist/videojs-contrib-eme.js"></script>
+
+    <!-- Include videojs-markers after jQuery and Video.js -->
+    <link href="https://cdn.jsdelivr.net/npm/videojs-markers@0.7.0/dist/videojs.markers.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/videojs-markers@0.7.0/dist/videojs-markers.min.js"></script>
+
+    <title>Test VideJS DRM with Markers</title>
+
+    <style>
+        .vjs-marker-tooltip.custom-marker .vjs-marker-text {
+            top: -40px !important; /* Adjust the value to move the text higher */
+            font-size: 16px !important; /* Adjust the value to increase the font size */
+        }
+    </style>
+    
+</head>
+<body>
+
+    <div style="margin: 50px auto;">
+        <video id="my-video" class="video-js"></video>
+    </div>
+
+    <script>
+        // Marker data
+        var markersData = [
+            { time: 9.5, text: "Old Lady Sitting", overlayText: 'overlay', class: 'custom-marker' },
+            // Add more markers as needed
+            { time: 34, text: "Patric Morawetz and Nico Wleck", overlayText: 'overlay2', class: 'custom-marker' },
+            { time: 52, text: "Jason Paul - Germany", overlayText: 'overlay2', class: 'custom-marker' },
+            { time: 70, text: "Marcus Gustafsson - Sweden", overlayText: 'overlay2', class: 'custom-marker' },
+            { time: 110, text: "Levi Meeuwenberg - Judge", overlayText: 'overlay2', class: 'custom-marker' },
+            // Add more markers as needed
+        ];
+
+        function addMarkers(player, markers) {
+            player.markers({
+                markerStyle: {
+                    'width': '5px',
+                    'border-radius': '50%',
+                    'background-color': 'black'
+                },
+                markerTip: {
+                    display: true,
+                    text: function (marker) {
+                        return marker.text; // Remove "Break: "
+                    },
+                    time: function (marker) {
+                        return marker.time;
+                    }
+                },
+                breakOverlay: {
+                    display: false,
+                    displayTime: 3,
+                    style: {
+                        'width': '100%',
+                        'height': '50%',
+                        'background-color': 'rgba(0,0,0,0.7)',
+                        'color': 'white',
+                        'font-size': '18px'
+                    },
+                    text: function (marker) {
+                        return "Break overlay: " + marker.overlayText;
+                    }
+                },
+                onMarkerClick: function (marker) {},
+                onMarkerReached: function (marker) {},
+                markers: markers
+            });
+        }
+
+        var player = videojs(
+            'my-video',
+            {
+                controls: true,
+                fluid: true,
+                html5: {
+                    vhs: { 
+                        overrideNative: true 
+                    }
+                }
+            },
+            function() {
+                var player = this;
+                player.eme();
+                player.src({
+                    src: 'https://cdn.bitmovin.com/content/assets/art-of-motion_drm/mpds/11331.mpd',
+                    type: 'application/dash+xml',                    
+                    keySystems: {
+                      'com.widevine.alpha': 'https://cwip-shaka-proxy.appspot.com/no_auth',                     
+                    }
+                });
+
+                player.ready(function() {
+                    // Load the marker plugin with customization
+                    addMarkers(player, markersData);
+
+                    player.tech(true).on('keystatuschange', function(event) {    
+                        console.log("event: ", event);        
+                    });
+                });                
+            }
+        );
+    </script>
+</body>
+</html>
